@@ -1,0 +1,29 @@
+# Artefactos de compilación de módulos del kernel
+*.ko
+*.mod
+*.mod.c
+*.mod.o
+*.o
+*.cmd
+.*.cmd
+modules.order
+Module.symvers
+Module.markers
+modules.builtin
+modules.builtin.modinfo
+.tmp_versions/
+
+# Herramientas, editores y sistema operativo
+.cache/
+.vscode/
+.idea/
+.DS_Store
+._*
+*~
+*.swp
+*.swo
+
+# Ficheros empaquetados y comprimidos
+*.tar.gz
+*.tgz
+*.zip
