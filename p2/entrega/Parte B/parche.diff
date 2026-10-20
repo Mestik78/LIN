@@ -1,0 +1,47 @@
+diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
+index c84d12608..3bb9d27e7 100644
+--- a/arch/x86/entry/syscalls/syscall_64.tbl
++++ b/arch/x86/entry/syscalls/syscall_64.tbl
+@@ -417,3 +417,5 @@
+ 547	x32	pwritev2		compat_sys_pwritev64v2
+ # This is the end of the legacy x32 range.  Numbers 548 and above are
+ # not special and are not to be used for x32-specific syscalls.
++
++548 common  ledctl   sys_ledctl
+diff --git a/kernel/Makefile b/kernel/Makefile
+index 10ef068f5..fae426c4e 100644
+--- a/kernel/Makefile
++++ b/kernel/Makefile
+@@ -10,7 +10,7 @@ obj-y     = fork.o exec_domain.o panic.o \
+ 	    extable.o params.o \
+ 	    kthread.o sys_ni.o nsproxy.o \
+ 	    notifier.o ksysfs.o cred.o reboot.o \
+-	    async.o range.o smpboot.o ucount.o regset.o
++	    async.o range.o smpboot.o ucount.o regset.o sys_ledctl.o
+ 
+ obj-$(CONFIG_USERMODE_DRIVER) += usermode_driver.o
+ obj-$(CONFIG_MODULES) += kmod.o
+diff --git a/kernel/sys_ledctl.c b/kernel/sys_ledctl.c
+new file mode 100644
+index 000000000..9b75ca907
+--- /dev/null
++++ b/kernel/sys_ledctl.c
+@@ -0,0 +1,18 @@
++#include <linux/syscalls.h>
++#include <linux/vt_kern.h>
++#include <linux/tty.h>      /* For fg_console */
++#include <linux/kd.h>       /* For KDSETLED */
++
++SYSCALL_DEFINE1(ledctl, unsigned int, leds)
++{
++    unsigned int hw_mask = 0;
++    
++    if (leds > 7)
++        return -EINVAL;
++
++    if (leds & 0x1) hw_mask |= 0x1;
++    if (leds & 0x2) hw_mask |= 0x4;
++    if (leds & 0x4) hw_mask |= 0x2;
++
++    return (vc_cons[fg_console].d->port.tty->driver->ops->ioctl) (vc_cons[fg_console].d->port.tty, KDSETLED, hw_mask);
++}
