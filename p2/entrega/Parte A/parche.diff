@@ -1,0 +1,37 @@
+diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
+index c84d12608..133bcceb1 100644
+--- a/arch/x86/entry/syscalls/syscall_64.tbl
++++ b/arch/x86/entry/syscalls/syscall_64.tbl
+@@ -417,3 +417,5 @@
+ 547	x32	pwritev2		compat_sys_pwritev64v2
+ # This is the end of the legacy x32 range.  Numbers 548 and above are
+ # not special and are not to be used for x32-specific syscalls.
++
++548 common  lin_hello   sys_lin_hello
+diff --git a/kernel/Makefile b/kernel/Makefile
+index 10ef068f5..b5a750a2b 100644
+--- a/kernel/Makefile
++++ b/kernel/Makefile
+@@ -10,7 +10,7 @@ obj-y     = fork.o exec_domain.o panic.o \
+ 	    extable.o params.o \
+ 	    kthread.o sys_ni.o nsproxy.o \
+ 	    notifier.o ksysfs.o cred.o reboot.o \
+-	    async.o range.o smpboot.o ucount.o regset.o
++	    async.o range.o smpboot.o ucount.o regset.o sys_lin_hello.o
+ 
+ obj-$(CONFIG_USERMODE_DRIVER) += usermode_driver.o
+ obj-$(CONFIG_MODULES) += kmod.o
+diff --git a/kernel/sys_lin_hello.c b/kernel/sys_lin_hello.c
+new file mode 100644
+index 000000000..4714c40da
+--- /dev/null
++++ b/kernel/sys_lin_hello.c
+@@ -0,0 +1,8 @@
++#include <linux/syscalls.h>
++#include <linux/kernel.h>
++
++SYSCALL_DEFINE0(lin_hello)
++{
++    printk(KERN_DEBUG "Hello world!\n");
++    return 0;
++}
