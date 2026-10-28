@@ -22,7 +22,6 @@ modules.builtin.modinfo
 *~
 *.swp
 *.swo
-.editorconfig
 
 # Ficheros empaquetados y comprimidos
 *.tar.gz
