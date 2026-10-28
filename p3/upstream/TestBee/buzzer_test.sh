@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 PWMDIR=/sys/class/pwm/pwmchip0
 PWM0DIR=/sys/class/pwm/pwmchip0/pwm0
 
@@ -11,6 +11,7 @@ fi
 echo "Exporting PWM0 channel"
 cd $PWMDIR
 echo 0 > export
+sleep 0.5
 
 if [ ! -d ${PWM0DIR} ]; then
 	echo "$PWM0DIR directory not found. PWM channel unavailable" 
