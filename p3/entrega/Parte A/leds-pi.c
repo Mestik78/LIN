@@ -5,7 +5,6 @@
 #include <linux/cdev.h>
 #include <linux/device.h>
 #include <linux/uaccess.h>
-#include <asm-generic/errno.h>
 
 #define ALL_LEDS_ON 0x7
 #define ALL_LEDS_OFF 0
@@ -85,7 +84,7 @@ static int __init modleds_init(void)
   }
 
   /* Crear la clase */
-  leds_class = class_create(CLASS_NAME);
+  leds_class = class_create(THIS_MODULE, CLASS_NAME);
   if (IS_ERR(leds_class)) {
     err = PTR_ERR(leds_class);
     pr_err("Fallo al crear class\n");
@@ -112,9 +111,9 @@ static int __init modleds_init(void)
     unregister_chrdev_region(dev_num, 1);
   err_chrdev:
   err_gpios:
-    for (j = 0; j < i; j++)
-      gpiod_put(gpio_descriptors[j]);
-    return err;
+	  for (j = 0; j < i; j++)
+	    gpiod_put(gpio_descriptors[j]);
+	  return err;
 }
 
 static void __exit modleds_exit(void) {
