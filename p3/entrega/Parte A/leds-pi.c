@@ -42,13 +42,9 @@ static inline int set_pi_leds(unsigned int mask) {
 }
 
 
-static ssize_t led_read(struct file *filp, char __user *buf, size_t len, loff_t *off) {
-    return 0;
-}
-
 static ssize_t led_write(struct file *filp, const char __user *buf, size_t len, loff_t *off) {
     char kbuf[KERNEL_BUFFER_SIZE];
-    unsigned int mask;
+    unsigned int inmask, mask;
 
     if (len >= KERNEL_BUFFER_SIZE)
         return -EINVAL;
@@ -58,19 +54,19 @@ static ssize_t led_write(struct file *filp, const char __user *buf, size_t len, 
 
     kbuf[len] = '\0';
 
-    if (kstrtouint(kbuf, 0, &mask))
+    if (kstrtouint(kbuf, 0, &inmask))
         return -EINVAL;
 
-    if (mask > 0x7)
+    if (inmask > 0x7)
         return -EINVAL;
 
+    mask = inmask >> 2 & 0x1 | inmask & 0x2 | inmask << 2 & 0x4;
     set_pi_leds(mask);
 
     return len;
 }
 
 static struct file_operations fops = {
-  .read = led_read,
   .write = led_write,
 };
 
@@ -91,6 +87,29 @@ static int __init modleds_init(void)
     int i, j;
     int err = 0;
     char gpio_str[10];
+
+    // -- gpio setup
+
+    for (i = 0; i < NR_GPIO_LEDS; i++) {
+        /* Build string ID */
+        sprintf(gpio_str, "led_%d", i);
+        /* Request GPIO */
+        if ((err = gpio_request(led_gpio[i], gpio_str))) {
+        pr_err("Failed GPIO[%d] %d request\n", i, led_gpio[i]);
+        goto error_gpio;
+        }
+
+        /* Transforming into descriptor */
+        if (!(gpio_descriptors[i] = gpio_to_desc(led_gpio[i]))) {
+        pr_err("GPIO[%d] %d is not valid\n", i, led_gpio[i]);
+        err = -EINVAL;
+        goto error_gpio;
+        }
+
+        gpiod_direction_output(gpio_descriptors[i], 0);
+    }
+
+
 
 
     // -- driver setup
@@ -144,35 +163,9 @@ static int __init modleds_init(void)
     printk(KERN_INFO "Remove the module when done.\n");
 
 
-
-    // -- gpio setup
-
-    for (i = 0; i < NR_GPIO_LEDS; i++) {
-        /* Build string ID */
-        sprintf(gpio_str, "led_%d", i);
-        /* Request GPIO */
-        if ((err = gpio_request(led_gpio[i], gpio_str))) {
-        pr_err("Failed GPIO[%d] %d request\n", i, led_gpio[i]);
-        goto error_gpio;
-        }
-
-        /* Transforming into descriptor */
-        if (!(gpio_descriptors[i] = gpio_to_desc(led_gpio[i]))) {
-        pr_err("GPIO[%d] %d is not valid\n", i, led_gpio[i]);
-        err = -EINVAL;
-        goto error_gpio;
-        }
-
-        gpiod_direction_output(gpio_descriptors[i], 0);
-    }
-
     return 0;
-
     // ---- errors ----
 
-error_gpio:
-  for (j = 0; j < i; j++)
-    gpiod_put(gpio_descriptors[j]);
 error_device:
     class_destroy(class);
 error_class:
@@ -188,12 +181,16 @@ error_add:
 error_alloc:
     unregister_chrdev_region(start, 1);
 
-    return ret;}
+error_gpio:
+    for (j = 0; j < i; j++)
+        gpiod_put(gpio_descriptors[j]);
+
+    return ret;
+}
+
 
 static void __exit modleds_exit(void) {
     int i;
-    for (i = 0; i < NR_GPIO_LEDS; i++)
-        gpiod_put(gpio_descriptors[i]);
 
     /* Destroy the device and the class */
     if (device)
@@ -211,6 +208,9 @@ static void __exit modleds_exit(void) {
      */
     unregister_chrdev_region(start, 1);
 
+    set_pi_leds(0x0);
+    for (i = 0; i < NR_GPIO_LEDS; i++)
+        gpiod_put(gpio_descriptors[i]);
 }
 
 module_init(modleds_init);

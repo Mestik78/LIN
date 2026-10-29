@@ -24,22 +24,22 @@ MODULE_LICENSE("GPL");
 #define SEGMENT_COUNT 8
 
 const uint8_t hex_to_7seg[16] = {
-    [0x0] = DS_A | DS_B | DS_C | DS_D | DS_E | DS_F,        // 0
-    [0x1] = DS_B | DS_C,                                    // 1
-    [0x2] = DS_A | DS_B | DS_D | DS_E | DS_G,               // 2
-    [0x3] = DS_A | DS_B | DS_C | DS_D | DS_G,               // 3
-    [0x4] = DS_B | DS_C | DS_F | DS_G,                      // 4
-    [0x5] = DS_A | DS_C | DS_D | DS_F | DS_G,               // 5
-    [0x6] = DS_A | DS_C | DS_D | DS_E | DS_F | DS_G,        // 6
-    [0x7] = DS_A | DS_B | DS_C,                             // 7
-    [0x8] = DS_A | DS_B | DS_C | DS_D | DS_E | DS_F | DS_G, // 8
-    [0x9] = DS_A | DS_B | DS_C | DS_D | DS_F | DS_G,        // 9
-    [0xA] = DS_A | DS_B | DS_C | DS_E | DS_F | DS_G,        // A
-    [0xB] = DS_C | DS_D | DS_E | DS_F | DS_G,               // b
-    [0xC] = DS_A | DS_D | DS_E | DS_F,                      // C
-    [0xD] = DS_B | DS_C | DS_D | DS_E | DS_G,               // d
-    [0xE] = DS_A | DS_D | DS_E | DS_F | DS_G,               // E
-    [0xF] = DS_A | DS_E | DS_F | DS_G                       // F
+    DS_A | DS_B | DS_C | DS_D | DS_E | DS_F,        // 0
+    DS_B | DS_C,                                    // 1
+    DS_A | DS_B | DS_D | DS_E | DS_G,               // 2
+    DS_A | DS_B | DS_C | DS_D | DS_G,               // 3
+    DS_B | DS_C | DS_F | DS_G,                      // 4
+    DS_A | DS_C | DS_D | DS_F | DS_G,               // 5
+    DS_A | DS_C | DS_D | DS_E | DS_F | DS_G,        // 6
+    DS_A | DS_B | DS_C,                             // 7
+    DS_A | DS_B | DS_C | DS_D | DS_E | DS_F | DS_G, // 8
+    DS_A | DS_B | DS_C | DS_D | DS_F | DS_G,        // 9
+    DS_A | DS_B | DS_C | DS_E | DS_F | DS_G,        // A
+    DS_C | DS_D | DS_E | DS_F | DS_G,               // b
+    DS_A | DS_D | DS_E | DS_F,                      // C
+    DS_B | DS_C | DS_D | DS_E | DS_G,               // d
+    DS_A | DS_D | DS_E | DS_F | DS_G,               // E
+    DS_A | DS_E | DS_F | DS_G                       // F
 };
 
 /* Indices of GPIOs used by this module */
