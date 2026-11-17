@@ -42,6 +42,9 @@ static ssize_t list_write(struct file *filp, const char __user *buf, size_t len,
 	char command[64];
 	int value;
 
+	if (len == 0)
+		return 0;
+
 	if (len > 127)
 		len = 127;
 
@@ -51,6 +54,9 @@ static ssize_t list_write(struct file *filp, const char __user *buf, size_t len,
 	kbuf[len] = '\0';
 
 	int num_items = sscanf(kbuf, "%63s %d", command, &value);
+
+	if (num_items < 1)
+		return -EINVAL;
 
 	if (!strcmp(command, "add")) {
 		struct list_item *new_item;
@@ -68,50 +74,41 @@ static ssize_t list_write(struct file *filp, const char __user *buf, size_t len,
 		new_item->data = value;
 
 		spin_lock(&sp);
-		list_add(&new_item->links, &mylist);
+		list_add_tail(&new_item->links, &mylist);
 		spin_unlock(&sp);
 
 		printk(KERN_INFO "añadido %d\n", value);
 
 	} else if (!strcmp(command, "remove")) {
 		struct list_item *item, *tmp;
-		LIST_HEAD(to_free);
 
 		if (num_items != 2) {
 			printk(KERN_ERR "número de argumentos inválido\n");
 			return -EINVAL;
 		}
 
-		/* Mover los nodos lista local*/
 		spin_lock(&sp);
 		list_for_each_entry_safe(item, tmp, &mylist, links) {
 			if (item->data == value) {
-				list_move(&item->links, &to_free);
+				list_del(&item->links);
+				kfree(item);
 			}
 		}
 		spin_unlock(&sp);
-
-		list_for_each_entry_safe(item, tmp, &to_free, links) {
-			list_del(&item->links);
-			kfree(item);
-		}
 
 		printk(KERN_INFO "eliminado %d\n", value);
 
 	} else if (!strcmp(command, "cleanup")) {
 		struct list_item *item;
 		struct list_item *tmp;
-		LIST_HEAD(to_free);
 
 		/* Vaciar mylist */
 		spin_lock(&sp);
-		list_splice_init(&mylist, &to_free);
-		spin_unlock(&sp);
-
-		list_for_each_entry_safe(item, tmp, &to_free, links) {
+		list_for_each_entry_safe(item, tmp, &mylist, links) {
 			list_del(&item->links);
 			kfree(item);
 		}
+		spin_unlock(&sp);
 
 		printk(KERN_INFO "lista eliminada\n");
 
@@ -170,7 +167,7 @@ static const struct proc_ops proc_entry_fops = {
 
 static int __init init_mod(void)
 {
-	proc_entry = proc_create("modlist-smp", 0666, NULL, &proc_entry_fops);
+	proc_entry = proc_create("modlist", 0666, NULL, &proc_entry_fops);
 	if (proc_entry == NULL) {
 		printk(KERN_ERR "Can't create /proc entry\n");
 		return -ENOMEM;
@@ -184,7 +181,7 @@ static void __exit exit_mod(void)
 {
 	struct list_item *item, *tmp;
 
-	remove_proc_entry("modlist-smp", NULL);
+	remove_proc_entry("modlist", NULL);
 
 	list_for_each_entry_safe(item, tmp, &mylist, links) {
 		list_del(&item->links);
